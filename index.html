@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jawara Kosakata - Petani Mengusir Burung</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Fredoka', sans-serif;
+            /* Latar Belakang Sawah: Langit Biru, Tanah/Rumput Hijau */
+            background: linear-gradient(to bottom, #7dd3fc 0%, #38bdf8 60%, #4ade80 60%, #22c55e 100%);
+            overflow-x: hidden;
+            margin: 0;
+            height: 100vh;
+        }
+
+        /* Awan Berjalan */
+        .clouds {
+            position: absolute;
+            top: 0; left: 0; right: 0; height: 60%;
+            background-image: radial-gradient(circle at 20% 30%, white 10px, transparent 11px),
+                              radial-gradient(circle at 22% 32%, white 15px, transparent 16px),
+                              radial-gradient(circle at 25% 30%, white 10px, transparent 11px),
+                              radial-gradient(circle at 80% 20%, white 12px, transparent 13px),
+                              radial-gradient(circle at 82% 22%, white 18px, transparent 19px),
+                              radial-gradient(circle at 85% 20%, white 12px, transparent 13px);
+            opacity: 0.6;
+            animation: drift 60s linear infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes drift {
+            from { background-position: 0 0; }
+            to { background-position: 100vw 0; }
+        }
+
+        /* Papan Kayu (Rustic UI) */
+        .wood-panel {
+            background-color: #fef3c7;
+            background-image: repeating-linear-gradient(
+                45deg,
+                rgba(217, 119, 6, 0.05) 0px,
+                rgba(217, 119, 6, 0.05) 2px,
+                transparent 2px,
+                transparent 8px
+            );
+            border: 6px solid #b45309;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(180, 83, 9, 0.2);
+            border-radius: 1rem;
+        }
+
+        /* Animasi Burung */
+        .bird-icon {
+            display: inline-block;
+            transition: transform 0.2s;
+            filter: drop-shadow(0 8px 6px rgba(0,0,0,0.3));
+        }
+        .bird-container:hover .bird-icon {
+            transform: translateY(-10px) scale(1.1);
+        }
+        .bird-bobbing {
+            animation: bobbing 2s infinite ease-in-out;
+        }
+        @keyframes bobbing {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        /* Animasi Terbang Mengusir */
+        .fly-away {
+            animation: flyAwayAnim 0.8s cubic-bezier(0.55, 0.055, 0.675, 0.19) forwards !important;
+            pointer-events: none;
+        }
+        @keyframes flyAwayAnim {
+            0% { transform: translate(0, 0) scale(1); opacity: 1; }
+            50% { transform: translate(50px, -150px) scale(1.2) rotate(-15deg); opacity: 1; }
+            100% { transform: translate(200px, -500px) scale(0.5) rotate(-45deg); opacity: 0; }
+        }
+
+        /* Kawat Pagar */
+        .fence-wire {
+            position: absolute;
+            width: 100%;
+            height: 4px;
+            background: #4b5563;
+            box-shadow: 0 2px 2px rgba(0,0,0,0.3);
+            z-index: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+
+        /* Custom Animations */
+        @keyframes popIn { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .animate-pop-in { animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
+        
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+        .animate-shake { animation: shake 0.3s ease-in-out; }
+
+        .floating-score {
+            position: absolute; font-size: 2.5rem; font-weight: bold; color: #fbbf24;
+            pointer-events: none; animation: floatUp 1s ease-out forwards; z-index: 100;
+            text-shadow: 2px 2px 0 #b45309, -2px -2px 0 #b45309, 2px -2px 0 #b45309, -2px 2px 0 #b45309;
+        }
+        @keyframes floatUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-80px) scale(1.5); opacity: 0; } }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <div class="clouds"></div>
+
+    <!-- Petani di Pojok (Hiasan Latar) -->
+    <div id="petani-bg" class="fixed bottom-0 left-0 md:left-10 z-0 opacity-90 hidden md:block" style="transform: scaleX(-1);">
+        <div class="text-[12rem] drop-shadow-2xl">🧑‍🌾</div>
+    </div>
+    <!-- Orang-orangan Sawah -->
+    <div id="scarecrow-bg" class="fixed bottom-10 right-10 z-0 opacity-80 hidden md:block">
+        <div class="text-[10rem] drop-shadow-xl">🎃</div>
+        <div class="w-2 h-32 bg-amber-800 mx-auto -mt-10"></div>
+    </div>
+
+    <!-- SETUP SCREEN -->
+    <div id="setup-screen" class="absolute inset-0 flex items-center justify-center p-4 z-30">
+        <!-- Background Image Khusus Menu Awal -->
+        <div class="absolute inset-0 bg-[url('https://imgur.com/4vg9ArW.png')] bg-cover bg-center"></div>
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-sm"></div>
+        
+        <div class="wood-panel p-8 max-w-lg w-full animate-pop-in text-center relative z-10">
+            <!-- Pin hiasan -->
+            <div class="absolute top-3 left-3 w-4 h-4 bg-gray-400 rounded-full shadow-inner border border-gray-500"></div>
+            <div class="absolute top-3 right-3 w-4 h-4 bg-gray-400 rounded-full shadow-inner border border-gray-500"></div>
+            
+            <h1 class="text-4xl md:text-5xl font-black text-amber-900 mb-2 drop-shadow-md">🌾 Petani vs Burung Hama 🐦</h1>
+            <p class="text-amber-700 mb-8 font-semibold">Jawab Kuis untuk Mengusir Burung Kosakata!</p>
+
+            <div class="space-y-5 text-left bg-amber-50/50 p-4 rounded-xl border border-amber-200">
+                <!-- Mode Selection -->
+                <div>
+                    <label class="block text-amber-900 font-bold mb-2">Pilih Mode Panen:</label>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="setMode('solo')" id="btn-mode-solo" class="mode-btn py-3 px-4 rounded-xl border-b-4 border-amber-600 bg-amber-200 text-amber-900 font-bold hover:bg-amber-300 transition">👤 Solo</button>
+                        <button onclick="setMode('duel')" id="btn-mode-duel" class="mode-btn py-3 px-4 rounded-xl border-b-4 border-gray-300 bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition">⚔️ Duel Petani</button>
+                    </div>
+                </div>
+
+                <!-- Level Selection -->
+                <div>
+                    <label class="block text-amber-900 font-bold mb-2">Tingkat Kesulitan Hama:</label>
+                    <select id="level-select" class="w-full p-3 rounded-xl border-2 border-amber-300 bg-white text-amber-900 font-bold focus:outline-none">
+                        <option value="1">Hama Normal (Dasar)</option>
+                        <option value="2">Hama Ganas (Lanjutan)</option>
+                    </select>
+                </div>
+
+                <!-- Player Inputs -->
+                <div id="player-inputs" class="space-y-2">
+                    <!-- Injected via JS -->
+                </div>
+
+                <!-- Asisten Suara Toggle -->
+                <div class="flex items-center justify-between mt-4 border-t border-amber-200 pt-4">
+                    <span class="font-bold text-amber-900 flex items-center gap-2">
+                        🔊 Asisten Suara (Bantu Baca)
+                    </span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="audio-assist-toggle" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-amber-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-500"></div>
+                    </label>
+                </div>
+
+                <!-- Timer Toggle -->
+                <div class="flex items-center justify-between mt-2">
+                    <span class="font-bold text-amber-900">Gunakan Batas Waktu (10 Menit)</span>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="timer-toggle" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-amber-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
+                    </label>
+                </div>
+            </div>
+
+            <button onclick="startGame()" class="mt-6 w-full bg-green-600 hover:bg-green-700 text-white border-b-4 border-green-800 font-black py-4 rounded-xl shadow-lg transform transition active:scale-95 text-2xl">
+                MULAI MENGUSIR! 🚀
+            </button>
+
+            <!-- Profil Pengembang -->
+            <div class="mt-6 flex items-center justify-center gap-4 border-t-2 border-amber-400/50 pt-4">
+                <img src="https://imgur.com/JTEebVN.png" alt="Bu Wulan Widari Endah" class="w-14 h-14 rounded-full border-2 border-amber-600 shadow-md object-cover bg-amber-50">
+                <div class="text-left leading-tight">
+                    <p class="text-[10px] font-bold text-amber-900/60 uppercase tracking-widest mb-1">Dikembangkan Oleh:</p>
+                    <p class="text-sm md:text-base font-black text-amber-900">Bu Wulan Widari Endah</p>
+                    <p class="text-xs font-bold text-amber-700 mt-0.5">Guru SMPN 3 Cilegon</p>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- GAME SCREEN -->
+    <div id="game-screen" class="hidden absolute inset-0 flex flex-col p-2 md:p-6 z-10">
+        
+        <!-- Header: Scoreboard & Controls (Wooden Style) -->
+        <div class="wood-panel p-3 mb-6 flex flex-col md:flex-row justify-between items-center gap-3">
+            <div class="flex-1 w-full flex flex-col md:flex-row items-center gap-4">
+                <div class="bg-amber-100 border-2 border-amber-500 rounded-lg px-3 py-1 text-center shadow-inner">
+                    <span class="text-xs font-bold text-amber-700 uppercase block">Giliran:</span>
+                    <span id="active-player-name" class="text-amber-900 font-black text-lg">Petani</span>
+                </div>
+                
+                <div id="scoreboard" class="flex flex-wrap justify-center gap-2 md:gap-4 flex-1">
+                    <!-- Injected via JS -->
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 md:gap-3 self-center md:self-auto flex-wrap justify-center">
+                <button id="audio-toggle-btn" onclick="toggleAudio()" class="bg-blue-100 hover:bg-blue-200 text-blue-800 border-b-4 border-blue-300 px-3 py-2 rounded-lg transition font-bold text-sm shadow-md" title="Matikan/Nyalakan Suara">
+                    🔊 Suara On
+                </button>
+                <div id="timer-display" class="hidden bg-red-600 text-white font-black px-4 py-2 rounded-lg border-b-4 border-red-800 flex items-center gap-2 shadow-md">
+                    ⏱ <span id="time-left">10:00</span>
+                </div>
+                <button onclick="resetGame()" class="bg-amber-200 hover:bg-amber-300 text-amber-900 border-b-4 border-amber-500 p-2 px-3 rounded-lg transition font-bold text-sm shadow-md" title="Ulangi Permainan">
+                    Keluar Sawah
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Game Area (Sawah/Pagar) -->
+        <div class="flex-1 flex flex-col lg:flex-row gap-6 min-h-0 relative">
+            
+            <!-- Area Burung Hama -->
+            <div class="flex-1 rounded-3xl p-4 flex flex-col items-center justify-center min-h-0 relative">
+                
+                <!-- Pagar Belakang -->
+                <div class="absolute inset-0 flex flex-col justify-around py-10 pointer-events-none opacity-60">
+                    <div class="w-full h-2 bg-amber-900/40 rounded-full"></div>
+                    <div class="w-full h-2 bg-amber-900/40 rounded-full"></div>
+                    <div class="w-full h-2 bg-amber-900/40 rounded-full"></div>
+                </div>
+
+                <div id="bird-grid" class="grid grid-cols-4 gap-x-4 gap-y-12 md:gap-x-12 md:gap-y-16 w-full max-w-4xl relative z-10">
+                    <!-- Birds injected via JS -->
+                </div>
+            </div>
+
+            <!-- SOLO Challenge Panel (Gulungan Kertas) -->
+            <div id="solo-panel" class="w-full lg:w-[450px] bg-[#fff9e6] rounded-xl shadow-2xl border-x-8 border-y-4 border-[#e2c792] p-4 md:p-6 flex flex-col hidden animate-slide-up overflow-y-auto relative z-20" style="background-image: radial-gradient(#d4b87e 1px, transparent 1px); background-size: 20px 20px;">
+                
+                <!-- Tombol Batal Kuis -->
+                <button onclick="cancelQuiz()" class="absolute top-3 right-3 md:top-4 md:right-4 text-amber-700 hover:text-red-600 font-black text-2xl transition bg-amber-200 hover:bg-red-100 w-8 h-8 rounded-full flex items-center justify-center border border-amber-400 shadow-sm" title="Batal Kuis">
+                    &times;
+                </button>
+
+                <div class="text-center mb-2 mt-2 md:mt-0">
+                    <span class="text-sm font-bold text-amber-700 uppercase tracking-widest bg-amber-200 px-3 py-1 rounded-full border border-amber-400">Pertanyaan Burung Hama</span>
+                    <h2 id="solo-panel-word" class="text-3xl md:text-5xl font-black text-amber-900 my-4 capitalize drop-shadow-sm">Kata</h2>
+                </div>
+                
+                <!-- PROGRESS DOTS (Biji-bijian) -->
+                <div class="flex justify-center gap-3 mb-6">
+                    <div id="solo-dot-0" class="w-4 h-4 rounded-full bg-amber-900/20 shadow-inner"></div>
+                    <div id="solo-dot-1" class="w-4 h-4 rounded-full bg-amber-900/20 shadow-inner"></div>
+                    <div id="solo-dot-2" class="w-4 h-4 rounded-full bg-amber-900/20 shadow-inner"></div>
+                    <div id="solo-dot-3" class="w-4 h-4 rounded-full bg-amber-900/20 shadow-inner"></div>
+                </div>
+                
+                <div class="flex-1 flex flex-col gap-4">
+                    <div class="bg-white/80 backdrop-blur-sm border-2 border-amber-300 rounded-2xl p-4 shadow-sm relative">
+                        <div class="absolute -top-4 -right-2 bg-green-500 text-white font-black px-4 py-1 rounded-lg border-b-4 border-green-700 shadow-md transform rotate-3">
+                            Poin: <span id="solo-turn-score">0</span>
+                        </div>
+                        <div class="flex items-center justify-between mb-4 bg-amber-50 p-3 rounded-xl border border-amber-200 shadow-inner">
+                            <h3 id="solo-quiz-question" class="text-lg font-bold text-amber-950 leading-snug text-left flex-1">?</h3>
+                            <button onclick="readCurrentQuiz()" class="ml-3 bg-blue-100 hover:bg-blue-200 text-blue-800 p-3 rounded-full shadow-md text-xl transition-transform active:scale-95 border-2 border-blue-300" title="Bacakan Soal (Teks ke Suara)">🔊</button>
+                        </div>
+                        <div id="solo-quiz-options" class="grid grid-cols-1 gap-3"></div>
+                    </div>
+                    <div class="mt-auto pt-4">
+                        <button id="solo-next-btn" onclick="nextSoloQuizStep()" class="hidden w-full bg-green-500 hover:bg-green-600 text-white border-b-4 border-green-700 font-black py-4 rounded-xl shadow-lg transition text-xl">Lanjut ➔</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- DUEL ARENA MODAL (Full Screen Overlay) -->
+        <div id="duel-panel" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex flex-col animate-pop-in">
+            <!-- Header Box (Papan Kayu Besar) -->
+            <div class="h-auto md:h-1/3 min-h-[180px] bg-[url('https://www.transparenttextures.com/patterns/wood-pattern.png')] bg-amber-800 flex flex-col items-center justify-center p-4 text-center border-b-8 border-amber-950 relative shadow-2xl z-10 text-white">
+                
+                <!-- Tombol Batal Kuis Khusus Layar Duel -->
+                <button onclick="cancelQuiz()" class="absolute top-2 left-2 md:top-4 md:left-4 bg-red-500 hover:bg-red-600 text-white border-b-4 border-red-700 py-1 px-3 md:py-2 md:px-4 rounded-lg transition font-bold text-xs md:text-sm z-20 shadow-md">
+                    ✖ Batal Kuis
+                </button>
+
+                <!-- Tombol Keluar Sawah Khusus Layar Duel -->
+                <button onclick="resetGame()" class="absolute top-2 right-2 md:top-4 md:right-4 bg-amber-200 hover:bg-amber-300 text-amber-900 border-b-4 border-amber-500 py-1 px-3 md:py-2 md:px-4 rounded-lg transition font-bold text-xs md:text-sm z-20 shadow-md">
+                    Keluar Sawah
+                </button>
+
+                <span class="text-xs md:text-sm font-bold text-amber-300 uppercase tracking-[0.2em] mb-1 bg-black/30 px-3 py-1 rounded-full">⚔️ Adu Cepat Petani!</span>
+                <h2 id="duel-word" class="text-4xl md:text-6xl font-black text-white drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] mb-3 capitalize text-amber-100">Kata</h2>
+                
+                <div class="bg-[#fff9e6] text-amber-900 px-4 py-3 md:px-6 md:py-4 rounded-xl border-4 border-amber-600 shadow-[0_0_15px_rgba(255,255,255,0.2)] max-w-3xl w-full flex items-center justify-between gap-4">
+                    <h3 id="duel-question" class="text-lg md:text-2xl font-bold leading-snug text-left flex-1">Pertanyaan?</h3>
+                    <button onclick="readCurrentQuiz()" class="bg-blue-100 hover:bg-blue-200 text-blue-800 p-3 md:p-4 rounded-full shadow-md text-xl md:text-2xl transition-transform active:scale-95 border-2 border-blue-300" title="Bacakan Soal">🔊</button>
+                </div>
+
+                <div class="flex justify-center gap-3 mt-4" id="duel-dots-container">
+                    <div id="duel-dot-0" class="w-4 h-4 rounded-full bg-black/50"></div>
+                    <div id="duel-dot-1" class="w-4 h-4 rounded-full bg-black/50"></div>
+                    <div id="duel-dot-2" class="w-4 h-4 rounded-full bg-black/50"></div>
+                    <div id="duel-dot-3" class="w-4 h-4 rounded-full bg-black/50"></div>
+                </div>
+            </div>
+
+            <!-- Split Screen Areas -->
+            <div class="flex-1 flex flex-col md:flex-row relative">
+                
+                <div class="hidden md:flex absolute left-1/2 top-0 bottom-0 w-4 bg-amber-950 z-20 transform -translate-x-1/2 flex-col items-center justify-center shadow-2xl border-x-2 border-black/50">
+                    <div class="bg-red-600 text-white font-black text-2xl px-3 py-3 rounded-full border-4 border-amber-950 shadow-[0_0_20px_rgba(220,38,38,0.8)] absolute">VS</div>
+                </div>
+                
+                <div class="flex md:hidden absolute top-1/2 left-0 right-0 h-4 bg-amber-950 z-20 transform -translate-y-1/2 flex-row items-center justify-center border-y-2 border-black/50">
+                    <div class="bg-red-600 text-white font-black px-4 py-1 rounded-full border-4 border-amber-950 shadow-md text-lg absolute">VS</div>
+                </div>
+
+                <!-- PLAYER 1 SIDE (Merah) -->
+                <div id="duel-p1-side" class="flex-1 p-4 md:p-8 flex flex-col relative bg-gradient-to-br from-red-900 to-red-800">
+                    <div class="flex justify-between items-center mb-6 bg-red-950/50 p-3 rounded-2xl border border-red-700/50">
+                        <div class="flex items-center gap-3">
+                            <span class="text-4xl">🧑‍🌾</span>
+                            <h4 id="duel-p1-name" class="text-2xl md:text-3xl font-black text-red-100 drop-shadow-sm">Pemain 1</h4>
+                        </div>
+                        <div class="bg-red-600 border-b-4 border-red-800 text-white px-4 py-2 rounded-xl font-black text-2xl shadow-lg">
+                            ⭐ <span id="duel-p1-score">0</span>
+                        </div>
+                    </div>
+                    <div id="duel-p1-options" class="flex-1 grid grid-cols-1 gap-3 md:gap-5 content-center max-w-lg mx-auto w-full">
+                        <!-- Options Injected Here -->
+                    </div>
+                    <div id="duel-p1-lock" class="hidden absolute inset-0 bg-red-950/80 backdrop-blur-sm flex flex-col items-center justify-center z-20 m-2 rounded-3xl border-4 border-red-500/30">
+                        <span class="text-7xl mb-4 animate-pulse">🔒</span>
+                        <span class="font-black text-red-200 text-3xl tracking-widest uppercase">TERKUNCI</span>
+                    </div>
+                </div>
+
+                <!-- PLAYER 2 SIDE (Biru) -->
+                <div id="duel-p2-side" class="flex-1 p-4 md:p-8 flex flex-col relative bg-gradient-to-bl from-blue-900 to-blue-800">
+                    <div class="flex justify-between items-center mb-6 bg-blue-950/50 p-3 rounded-2xl border border-blue-700/50">
+                        <div class="flex items-center gap-3">
+                            <span class="text-4xl" style="transform: scaleX(-1);">🧑‍🌾</span>
+                            <h4 id="duel-p2-name" class="text-2xl md:text-3xl font-black text-blue-100 drop-shadow-sm">Pemain 2</h4>
+                        </div>
+                        <div class="bg-blue-600 border-b-4 border-blue-800 text-white px-4 py-2 rounded-xl font-black text-2xl shadow-lg">
+                            ⭐ <span id="duel-p2-score">0</span>
+                        </div>
+                    </div>
+                    <div id="duel-p2-options" class="flex-1 grid grid-cols-1 gap-3 md:gap-5 content-center max-w-lg mx-auto w-full">
+                        <!-- Options Injected Here -->
+                    </div>
+                    <div id="duel-p2-lock" class="hidden absolute inset-0 bg-blue-950/80 backdrop-blur-sm flex flex-col items-center justify-center z-20 m-2 rounded-3xl border-4 border-blue-500/30">
+                        <span class="text-7xl mb-4 animate-pulse">🔒</span>
+                        <span class="font-black text-blue-200 text-3xl tracking-widest uppercase">TERKUNCI</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- CUSTOM MODAL OVERLAY (Pengganti Alert & Confirm Browser) -->
+    <div id="custom-modal" class="hidden fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="wood-panel p-6 max-w-sm w-full text-center animate-pop-in relative shadow-2xl">
+            <h3 id="modal-title" class="text-3xl font-black text-amber-900 mb-2 drop-shadow-sm">Judul</h3>
+            <p id="modal-message" class="text-amber-800 font-bold mb-6 text-lg">Pesan</p>
+            <div id="modal-actions" class="flex justify-center gap-3">
+                <!-- Tombol disuntikkan lewat JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- AUDIO CONTEXT SCRIPT -->
+    <script>
+        // --- DATA KOSAKATA ---
+        const vocabDatabase = [
+            { word: "cerdas", type: "sifat", synonym: "pintar, pandai", antonym: "bodoh, dungu", example: "Budi adalah siswa yang cerdas di kelas.", level: 1 },
+            { word: "rajin", type: "sifat", synonym: "giat, tekun", antonym: "malas", example: "Siti rajin menabung setiap hari.", level: 1 },
+            { word: "indah", type: "sifat", synonym: "cantik, elok", antonym: "jelek, buruk", example: "Pemandangan pantai itu sangat indah.", level: 1 },
+            { word: "cepat", type: "sifat", synonym: "kencang, laju", antonym: "lambat, pelan", example: "Kuda itu berlari dengan sangat cepat.", level: 1 },
+            { word: "berbicara", type: "kerja", synonym: "mengobrol, berucap", antonym: "diam, membisu", example: "Guru sedang berbicara di depan kelas.", level: 1 },
+            { word: "berlari", type: "kerja", synonym: "bergegas, memburu", antonym: "berjalan, berhenti", example: "Andi berlari mengejar bus sekolah.", level: 1 },
+            { word: "panas", type: "sifat", synonym: "hangat, gerah", antonym: "dingin, sejuk", example: "Cuaca siang hari ini sangat panas.", level: 1 },
+            { word: "kaya", type: "sifat", synonym: "berada, makmur", antonym: "miskin, melarat", example: "Pengusaha sukses itu sangat kaya.", level: 1 },
+            { word: "bahagia", type: "sifat", synonym: "gembira, senang", antonym: "sedih, duka", example: "Keluarga itu hidup dengan bahagia.", level: 1 },
+            { word: "sedih", type: "sifat", synonym: "muram, duka", antonym: "bahagia, gembira", example: "Adik menangis karena merasa sedih.", level: 1 },
+            { word: "kuat", type: "sifat", synonym: "perkasa, tangguh", antonym: "lemah, rentan", example: "Petinju itu memiliki pukulan yang kuat.", level: 1 },
+            { word: "lemah", type: "sifat", synonym: "lunglai, tak bertenaga", antonym: "kuat, kokoh", example: "Badannya terasa lemah setelah sakit.", level: 1 },
+            { word: "menulis", type: "kerja", synonym: "mencatat, mengarang", antonym: "menghapus, membaca", example: "Ani sedang menulis surat untuk sahabatnya.", level: 1 },
+            { word: "pintar", type: "sifat", synonym: "cerdik, pandai", antonym: "bodoh", example: "Anjing peliharaanku sangat pintar.", level: 1 },
+            { word: "malas", type: "sifat", synonym: "enggan, lamban", antonym: "rajin, giat", example: "Sifat malas akan merugikan diri sendiri.", level: 1 },
+            { word: "tinggi", type: "sifat", synonym: "jangkung, luhur", antonym: "pendek, rendah", example: "Pohon kelapa itu sangat tinggi.", level: 1 },
+            
+            { word: "komprehensif", type: "sifat", synonym: "menyeluruh, lengkap", antonym: "parsial, sebagian", example: "Laporan itu dibuat secara komprehensif.", level: 2 },
+            { word: "fluktuatif", type: "sifat", synonym: "berubah-ubah", antonym: "stabil, tetap", example: "Harga cabai di pasar sangat fluktuatif.", level: 2 },
+            { word: "mengimplementasikan", type: "kerja", synonym: "menerapkan, melaksanakan", antonym: "mengabaikan", example: "Pemerintah mengimplementasikan kebijakan baru.", level: 2 },
+            { word: "signifikan", type: "sifat", synonym: "penting, berarti", antonym: "sepele, tidak berarti", example: "Ada peningkatan nilai yang signifikan.", level: 2 },
+            { word: "kooperatif", type: "sifat", synonym: "bekerja sama", antonym: "individualis", example: "Semua anggota kelompok sangat kooperatif.", level: 2 },
+            { word: "relevan", type: "sifat", synonym: "bersesuaian, terkait", antonym: "menyimpang, tidak terkait", example: "Berikan argumen yang relevan dengan topik.", level: 2 },
+            { word: "esensial", type: "sifat", synonym: "mendasar, pokok, penting", antonym: "tambahan, trivial", example: "Air adalah kebutuhan esensial bagi makhluk hidup.", level: 2 },
+            { word: "memanifestasikan", type: "kerja", synonym: "mewujudkan, melahirkan", antonym: "menyembunyikan", example: "Seniman itu memanifestasikan idenya dalam lukisan.", level: 2 },
+            { word: "stagnan", type: "sifat", synonym: "mandek, terhenti", antonym: "berkembang, maju", example: "Perekonomian di daerah tersebut sedang stagnan.", level: 2 },
+            { word: "dinamis", type: "sifat", synonym: "bergerak, aktif", antonym: "statis, diam", example: "Kurikulum pendidikan harus dinamis mengikuti zaman.", level: 2 }
+        ];
+
+        // Variasi Icon Burung untuk UI
+        const birdIcons = ["🐦", "🦅", "🦉", "🦜", "🦤", "🕊️"];
+
+        let gameState = {
+            mode: 'solo',
+            players: [],
+            currentPlayerIndex: 0,
+            activeCards: [], // Now represents birds
+            selectedCardId: null,
+            timerActive: false,
+            timeLeft: 600,
+            timerInterval: null,
+            currentQuizData: [],
+            currentQuizIndex: 0,
+            turnScore: 0,
+            p1Locked: false,
+            p2Locked: false,
+            audioAssist: true,
+            sfxActive: true // Status Suara Master
+        };
+
+        // --- MASTER AUDIO TOGGLE ---
+        function toggleAudio() {
+            gameState.sfxActive = !gameState.sfxActive;
+            const btn = document.getElementById('audio-toggle-btn');
+            
+            if (!gameState.sfxActive) {
+                stopSpeaking();
+                btn.innerHTML = '🔇 Suara Off';
+                btn.className = 'bg-gray-300 hover:bg-gray-400 text-gray-700 border-b-4 border-gray-500 px-3 py-2 rounded-lg transition font-bold text-sm shadow-md';
+            } else {
+                btn.innerHTML = '🔊 Suara On';
+                btn.className = 'bg-blue-100 hover:bg-blue-200 text-blue-800 border-b-4 border-blue-300 px-3 py-2 rounded-lg transition font-bold text-sm shadow-md';
+            }
+        }
+
+        // --- BATAL KUIS (KELUAR DI TENGAH SOAL) ---
+        function cancelQuiz() {
+            stopSpeaking();
+            document.getElementById('solo-panel').classList.add('hidden');
+            document.getElementById('duel-panel').classList.add('hidden');
+            
+            if(gameState.selectedCardId !== null) {
+                const icon = document.querySelector(`#bird-${gameState.selectedCardId} .bird-icon`);
+                if(icon) {
+                    // Kembalikan animasi burung (bobbing)
+                    icon.classList.add('bird-bobbing');
+                    icon.style.transform = '';
+                }
+                gameState.selectedCardId = null;
+            }
+        }
+
+        // --- TEXT TO SPEECH (BANTU BACA) ---
+        function formatTextForSpeech(text) {
+            let cleanText = text.replace(/<[^>]+>/g, ' '); // hapus tag html
+            cleanText = cleanText.replace(/_____/g, " titik titik ");
+            return cleanText;
+        }
+
+        function forceSpeak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); 
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'id-ID'; // Bahasa Indonesia
+                utterance.rate = 0.85; // Sedikit lebih lambat agar jelas untuk ABK
+                utterance.pitch = 1;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function readCurrentQuiz() {
+            if (!gameState.sfxActive) return; // Jangan membaca jika master audio dimatikan
+            if (!gameState.currentQuizData || gameState.currentQuizData.length === 0) return;
+            const quiz = gameState.currentQuizData[gameState.currentQuizIndex];
+            
+            let textToRead = `Soal. `;
+            textToRead += formatTextForSpeech(quiz.text) + ". Pilihan jawabannya adalah: ";
+            
+            quiz.options.forEach((opt, idx) => {
+                textToRead += `${String.fromCharCode(65 + idx)}. ${opt}. `;
+            });
+            
+            forceSpeak(textToRead);
+        }
+
+        function stopSpeaking() {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+            }
+        }
+
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playSound(type) {
+            if (!gameState.sfxActive) return; // Cek status master suara
+
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            if (type === 'correct') {
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(523.25, audioCtx.currentTime); 
+                oscillator.frequency.exponentialRampToValueAtTime(1046.50, audioCtx.currentTime + 0.1); 
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.5);
+                oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.5);
+            } else if (type === 'wrong') {
+                oscillator.type = 'sawtooth';
+                oscillator.frequency.setValueAtTime(150, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+                gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+                oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.3);
+            } else if (type === 'bird') {
+                // Chirp sound
+                oscillator.type = 'sine';
+                oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime);
+                oscillator.frequency.exponentialRampToValueAtTime(2000, audioCtx.currentTime + 0.1);
+                gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                oscillator.start(); oscillator.stop(audioCtx.currentTime + 0.1);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            setMode('solo'); 
+        });
+
+        function setMode(mode) {
+            gameState.mode = mode;
+            document.querySelectorAll('.mode-btn').forEach(btn => {
+                btn.className = "mode-btn py-3 px-4 rounded-xl border-b-4 border-gray-300 bg-gray-100 text-gray-600 font-bold hover:bg-gray-200 transition";
+            });
+            const activeBtn = document.getElementById(`btn-mode-${mode}`);
+            activeBtn.className = "mode-btn py-3 px-4 rounded-xl border-b-4 border-amber-600 bg-amber-200 text-amber-900 font-bold transition transform scale-105";
+
+            const container = document.getElementById('player-inputs');
+            container.innerHTML = '';
+            
+            let count = mode === 'solo' ? 1 : 2; 
+            for(let i=1; i<=count; i++) {
+                container.innerHTML += `
+                    <div>
+                        <input type="text" id="p-input-${i}" placeholder="Nama Petani ${i}" value="Petani ${i}" 
+                            class="w-full p-3 rounded-xl border-2 border-amber-300 bg-white focus:border-green-500 focus:outline-none font-bold text-gray-700">
+                    </div>
+                `;
+            }
+        }
+
+        function startGame() {
+            gameState.players = [];
+            const count = gameState.mode === 'solo' ? 1 : 2;
+            for(let i=1; i<=count; i++) {
+                const name = document.getElementById(`p-input-${i}`).value || `Petani ${i}`;
+                gameState.players.push({ id: i, name: name, score: 0 });
+            }
+            gameState.currentPlayerIndex = 0;
+
+            gameState.timerActive = document.getElementById('timer-toggle').checked;
+            gameState.audioAssist = document.getElementById('audio-assist-toggle').checked;
+            
+            if(gameState.timerActive) {
+                document.getElementById('timer-display').classList.remove('hidden');
+            } else {
+                document.getElementById('timer-display').classList.add('hidden');
+            }
+
+            const level = parseInt(document.getElementById('level-select').value);
+            let pool = vocabDatabase.filter(v => v.level === level);
+            if(pool.length < 16) pool = vocabDatabase;
+
+            pool.sort(() => 0.5 - Math.random());
+            gameState.activeCards = pool.slice(0, 16).map((word, index) => ({
+                ...word, 
+                id: index, 
+                isMatched: false,
+                icon: birdIcons[Math.floor(Math.random() * birdIcons.length)],
+                delay: Math.random() * 2 // Random animation delay
+            }));
+
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('solo-panel').classList.add('hidden');
+
+            renderScoreboard();
+            renderBoard();
+            if(gameState.timerActive) startTimer();
+        }
+
+        function renderScoreboard() {
+            const container = document.getElementById('scoreboard');
+            container.innerHTML = '';
+            
+            gameState.players.forEach((p, index) => {
+                const isActive = index === gameState.currentPlayerIndex;
+                const activeClass = isActive ? 'border-amber-600 bg-amber-50 scale-105 z-10' : 'border-amber-200 bg-white opacity-80';
+                
+                container.innerHTML += `
+                    <div id="score-card-${p.id}" class="min-w-[120px] p-2 md:p-3 rounded-xl border-4 transition-all duration-300 ${activeClass} flex items-center justify-between relative shadow-md">
+                        <span class="font-black text-amber-900 text-sm md:text-base truncate mr-2">${p.name}</span>
+                        <span class="bg-green-500 text-white border-b-2 border-green-700 px-3 py-1 rounded-lg font-black" id="score-val-${p.id}">${p.score}</span>
+                    </div>
+                `;
+            });
+
+            document.getElementById('active-player-name').innerText = gameState.players[gameState.currentPlayerIndex].name;
+        }
+
+        function renderBoard() {
+            const grid = document.getElementById('bird-grid');
+            grid.innerHTML = '';
+
+            gameState.activeCards.forEach(bird => {
+                // If the bird was chased away successfully, don't render it (or render as empty space to keep grid)
+                if(bird.isMatched) {
+                    grid.innerHTML += `<div class="w-full aspect-square md:w-20 md:h-20"></div>`;
+                    return;
+                }
+
+                let badgeColor = "bg-gray-500";
+                if(bird.type === 'benda') badgeColor = "bg-blue-500";
+                if(bird.type === 'kerja') badgeColor = "bg-red-500";
+                if(bird.type === 'sifat') badgeColor = "bg-green-500";
+
+                grid.innerHTML += `
+                    <div id="bird-${bird.id}" class="bird-container relative w-full aspect-square md:w-20 md:h-20 flex flex-col items-center justify-end cursor-pointer group" onclick="handleCardClick(${bird.id})">
+                        <!-- Pagar Kawat (individual segmen visual) -->
+                        <div class="absolute bottom-2 w-full h-1 bg-gray-800 shadow-[0_1px_1px_rgba(255,255,255,0.5)] z-0 hidden md:block"></div>
+                        
+                        <div class="bird-icon text-5xl md:text-6xl bird-bobbing relative z-10" style="animation-delay: -${bird.delay}s">
+                            ${bird.icon}
+                        </div>
+                        
+                        <!-- Lencana Jenis Kata -->
+                        <div class="absolute -bottom-4 bg-white border-2 ${badgeColor.replace('bg-','border-')} px-2 py-0.5 rounded-full text-[10px] font-black text-gray-700 uppercase shadow-md opacity-80 group-hover:opacity-100 transition-opacity z-20">
+                            ${bird.type}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function handleCardClick(id) {
+            if(gameState.selectedCardId !== null && gameState.selectedCardId !== id) return; 
+            const bird = gameState.activeCards.find(c => c.id === id);
+            if(bird.isMatched) return;
+
+            playSound('bird');
+            gameState.selectedCardId = id;
+            
+            // Visual feedback: Stop bobbing, make it look alert
+            const icon = document.querySelector(`#bird-${id} .bird-icon`);
+            if(icon) {
+                icon.classList.remove('bird-bobbing');
+                icon.style.transform = 'scale(1.2) rotate(-5deg)';
+            }
+            
+            gameState.currentQuizData = generateQuizForCard(bird);
+            gameState.currentQuizIndex = 0;
+            
+            if (gameState.mode === 'duel') {
+                openDuelPanel(bird);
+            } else {
+                openSoloPanel(bird);
+            }
+        }
+
+        function getRandomItems(sourceArray, excludeItem, count) {
+            let filtered = sourceArray.filter(i => i !== excludeItem);
+            filtered.sort(() => 0.5 - Math.random());
+            return filtered.slice(0, count);
+        }
+
+        function generateQuizForCard(card) {
+            let allSynonyms = vocabDatabase.map(v => v.synonym);
+            let allAntonyms = vocabDatabase.map(v => v.antonym);
+            let allWords = vocabDatabase.map(v => v.word);
+            
+            let q1Options = getRandomItems(allSynonyms, card.synonym, 3);
+            q1Options.push(card.synonym); q1Options.sort(() => 0.5 - Math.random());
+            let q1Correct = q1Options.indexOf(card.synonym);
+            
+            let q2Options = getRandomItems(allAntonyms, card.antonym, 3);
+            q2Options.push(card.antonym); q2Options.sort(() => 0.5 - Math.random());
+            let q2Correct = q2Options.indexOf(card.antonym);
+            
+            let q3Options = ['Benda', 'Kerja', 'Sifat'];
+            let correctTypeStr = card.type.charAt(0).toUpperCase() + card.type.slice(1);
+            let q3Correct = q3Options.indexOf(correctTypeStr);
+            
+            let maskedSentence = card.example.replace(new RegExp(`\\b${card.word}\\b`, 'gi'), '_____');
+            let q4Options = getRandomItems(allWords, card.word, 3);
+            q4Options.push(card.word); q4Options.sort(() => 0.5 - Math.random());
+            let q4Correct = q4Options.indexOf(card.word);
+            
+            return [
+                { text: `Apa <b>sinonim</b> (persamaan kata) dari kata "${card.word}"?`, options: q1Options, correct: q1Correct },
+                { text: `Apa <b>antonim</b> (lawan kata) dari kata "${card.word}"?`, options: q2Options, correct: q2Correct },
+                { text: `Termasuk <b>jenis kata</b> apakah "${card.word}"?`, options: q3Options, correct: q3Correct },
+                { text: `Lengkapi kalimat rumpang berikut:<br><br><span class="text-amber-800 font-medium">"${maskedSentence}"</span>`, options: q4Options, correct: q4Correct }
+            ];
+        }
+
+        // ==========================================
+        //  SOLO MODE LOGIC
+        // ==========================================
+        function openSoloPanel(card) {
+            const panel = document.getElementById('solo-panel');
+            panel.classList.remove('hidden');
+            document.getElementById('solo-panel-word').innerText = card.word;
+            gameState.turnScore = 0;
+            document.getElementById('solo-turn-score').innerText = gameState.turnScore;
+            renderSoloQuizStep();
+        }
+
+        function renderSoloQuizStep() {
+            const quiz = gameState.currentQuizData[gameState.currentQuizIndex];
+            for(let i=0; i<4; i++) {
+                const dot = document.getElementById(`solo-dot-${i}`);
+                if (i === gameState.currentQuizIndex) {
+                    dot.className = "w-5 h-5 rounded-full bg-amber-500 shadow-[0_0_10px_rgba(245,158,11,0.8)] scale-110";
+                } else if (i < gameState.currentQuizIndex) {
+                    dot.className = "w-4 h-4 rounded-full bg-green-500 shadow-inner";
+                } else {
+                    dot.className = "w-4 h-4 rounded-full bg-amber-900/20 shadow-inner";
+                }
+            }
+            document.getElementById('solo-quiz-question').innerHTML = `<span class="text-amber-600 mr-1 font-black">Soal ${gameState.currentQuizIndex + 1}/4:</span> <br> ${quiz.text}`;
+            
+            const optionsContainer = document.getElementById('solo-quiz-options');
+            optionsContainer.innerHTML = '';
+            quiz.options.forEach((opt, idx) => {
+                optionsContainer.innerHTML += `<button onclick="checkSoloAnswer(${idx})" id="solo-opt-${idx}" class="w-full p-4 text-base font-bold text-amber-900 bg-white border-2 border-amber-200 rounded-xl hover:bg-amber-100 hover:border-amber-400 active:scale-95 transition-all text-left break-words capitalize shadow-sm"><span class="inline-block w-6 font-black text-amber-500 mr-2">${String.fromCharCode(65 + idx)}.</span> ${opt}</button>`;
+            });
+            document.getElementById('solo-next-btn').classList.add('hidden');
+
+            if(gameState.audioAssist) {
+                readCurrentQuiz();
+            }
+        }
+
+        function checkSoloAnswer(selectedIndex) {
+            if (!document.getElementById('solo-next-btn').classList.contains('hidden')) return;
+            const quiz = gameState.currentQuizData[gameState.currentQuizIndex];
+            const isCorrect = selectedIndex === quiz.correct;
+
+            stopSpeaking();
+            
+            if (isCorrect) {
+                playSound('correct');
+                gameState.turnScore += 10;
+                document.getElementById('solo-turn-score').innerText = gameState.turnScore;
+                document.getElementById(`solo-opt-${selectedIndex}`).className = "w-full p-4 text-base font-black text-white bg-green-500 border-2 border-green-600 rounded-xl text-left capitalize shadow-md";
+            } else {
+                playSound('wrong');
+                document.getElementById(`solo-opt-${selectedIndex}`).className = "w-full p-4 text-base font-black text-white bg-red-500 border-2 border-red-600 rounded-xl text-left capitalize animate-shake shadow-md";
+                document.getElementById(`solo-opt-${quiz.correct}`).className = "w-full p-4 text-base font-black text-white bg-green-500 border-2 border-green-600 rounded-xl text-left capitalize shadow-md";
+            }
+            
+            for(let i=0; i<quiz.options.length; i++) {
+                const btn = document.getElementById(`solo-opt-${i}`);
+                btn.disabled = true;
+                if(i !== selectedIndex && i !== quiz.correct) btn.classList.add('opacity-50');
+            }
+            
+            const nextBtn = document.getElementById('solo-next-btn');
+            nextBtn.classList.remove('hidden');
+            if (gameState.currentQuizIndex === 3) {
+                nextBtn.innerHTML = "Usir Burung! 🌾";
+            } else {
+                nextBtn.innerHTML = "Soal Selanjutnya ➔";
+            }
+        }
+
+        function nextSoloQuizStep() {
+            if (gameState.currentQuizIndex < 3) {
+                gameState.currentQuizIndex++;
+                renderSoloQuizStep();
+            } else {
+                finishTurn();
+            }
+        }
+
+        // ==========================================
+        //  DUEL MODE LOGIC
+        // ==========================================
+        function openDuelPanel(card) {
+            const panel = document.getElementById('duel-panel');
+            panel.classList.remove('hidden');
+            document.getElementById('duel-word').innerText = card.word;
+            
+            document.getElementById('duel-p1-name').innerText = gameState.players[0].name;
+            document.getElementById('duel-p2-name').innerText = gameState.players[1].name;
+            updateDuelScores();
+
+            renderDuelQuizStep();
+        }
+
+        function updateDuelScores() {
+            document.getElementById('duel-p1-score').innerText = gameState.players[0].score;
+            document.getElementById('duel-p2-score').innerText = gameState.players[1].score;
+        }
+
+        function renderDuelQuizStep() {
+            gameState.p1Locked = false;
+            gameState.p2Locked = false;
+            document.getElementById('duel-p1-lock').classList.add('hidden');
+            document.getElementById('duel-p2-lock').classList.add('hidden');
+
+            const quiz = gameState.currentQuizData[gameState.currentQuizIndex];
+            
+            for(let i=0; i<4; i++) {
+                const dot = document.getElementById(`duel-dot-${i}`);
+                dot.className = i === gameState.currentQuizIndex ? "w-5 h-5 rounded-full bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,1)] scale-110" : (i < gameState.currentQuizIndex ? "w-4 h-4 rounded-full bg-green-500" : "w-4 h-4 rounded-full bg-black/50");
+            }
+            
+            document.getElementById('duel-question').innerHTML = `<span class="text-amber-700">Soal ${gameState.currentQuizIndex + 1}:</span> ${quiz.text}`;
+            
+            // Render P1 (Merah)
+            const p1Container = document.getElementById('duel-p1-options');
+            p1Container.innerHTML = '';
+            quiz.options.forEach((opt, idx) => {
+                p1Container.innerHTML += `
+                    <button onclick="checkDuelAnswer(0, ${idx})" id="duel-p1-opt-${idx}" 
+                        class="w-full py-4 px-6 text-lg md:text-xl font-black text-red-900 bg-red-100 border-b-8 border-red-300 rounded-2xl hover:bg-white active:translate-y-2 active:border-b-0 transition-all text-center capitalize shadow-md">
+                        ${opt}
+                    </button>`;
+            });
+
+            // Render P2 (Biru)
+            const p2Container = document.getElementById('duel-p2-options');
+            p2Container.innerHTML = '';
+            quiz.options.forEach((opt, idx) => {
+                p2Container.innerHTML += `
+                    <button onclick="checkDuelAnswer(1, ${idx})" id="duel-p2-opt-${idx}" 
+                        class="w-full py-4 px-6 text-lg md:text-xl font-black text-blue-900 bg-blue-100 border-b-8 border-blue-300 rounded-2xl hover:bg-white active:translate-y-2 active:border-b-0 transition-all text-center capitalize shadow-md">
+                        ${opt}
+                    </button>`;
+            });
+
+            if(gameState.audioAssist) {
+                readCurrentQuiz();
+            }
+        }
+
+        function checkDuelAnswer(playerIdx, optIdx) {
+            if(playerIdx === 0 && gameState.p1Locked) return;
+            if(playerIdx === 1 && gameState.p2Locked) return;
+
+            const quiz = gameState.currentQuizData[gameState.currentQuizIndex];
+            const isCorrect = (optIdx === quiz.correct);
+
+            stopSpeaking();
+            
+            const btnId = playerIdx === 0 ? `duel-p1-opt-${optIdx}` : `duel-p2-opt-${optIdx}`;
+            const btn = document.getElementById(btnId);
+
+            if(isCorrect) {
+                playSound('correct');
+                gameState.players[playerIdx].score += 10;
+                
+                btn.className = `w-full py-4 px-6 text-lg md:text-xl font-black text-white bg-green-500 border-b-8 border-green-700 rounded-2xl text-center capitalize shadow-lg transform scale-105 transition-all`;
+                
+                showFloatingDuelScore(playerIdx, "+10");
+                updateDuelScores();
+
+                gameState.p1Locked = true;
+                gameState.p2Locked = true;
+                showLocks(playerIdx); 
+                
+                setTimeout(nextDuelQuizStep, 1500);
+            } else {
+                playSound('wrong');
+                btn.className = `w-full py-4 px-6 text-lg md:text-xl font-black text-white bg-gray-500 border-b-8 border-gray-700 rounded-2xl text-center capitalize opacity-50 animate-shake transition-all`;
+                
+                if(playerIdx === 0) {
+                    gameState.p1Locked = true;
+                    document.getElementById('duel-p1-lock').classList.remove('hidden');
+                } else {
+                    gameState.p2Locked = true;
+                    document.getElementById('duel-p2-lock').classList.remove('hidden');
+                }
+
+                if(gameState.p1Locked && gameState.p2Locked) {
+                    // Reveal correct
+                    document.getElementById(`duel-p1-opt-${quiz.correct}`).className = `w-full py-4 px-6 text-lg md:text-xl font-black text-white bg-green-500 border-b-8 border-green-700 rounded-2xl text-center capitalize shadow-lg`;
+                    document.getElementById(`duel-p2-opt-${quiz.correct}`).className = `w-full py-4 px-6 text-lg md:text-xl font-black text-white bg-green-500 border-b-8 border-green-700 rounded-2xl text-center capitalize shadow-lg`;
+                    setTimeout(nextDuelQuizStep, 2000);
+                }
+            }
+        }
+
+        function showLocks(winnerIdx) {
+            if (winnerIdx === 0) {
+                document.getElementById('duel-p2-lock').classList.remove('hidden');
+                for(let i=0;i<4;i++) document.getElementById(`duel-p1-opt-${i}`).disabled = true;
+            } else {
+                document.getElementById('duel-p1-lock').classList.remove('hidden');
+                for(let i=0;i<4;i++) document.getElementById(`duel-p2-opt-${i}`).disabled = true;
+            }
+        }
+
+        function showFloatingDuelScore(playerIdx, text) {
+            const sideId = playerIdx === 0 ? 'duel-p1-side' : 'duel-p2-side';
+            const container = document.getElementById(sideId);
+            const floating = document.createElement('div');
+            floating.className = 'floating-score';
+            floating.innerText = text;
+            floating.style.left = '50%';
+            floating.style.top = '40%';
+            floating.style.transform = 'translate(-50%, -50%)';
+            container.appendChild(floating);
+            setTimeout(() => floating.remove(), 1000);
+        }
+
+        function nextDuelQuizStep() {
+            if (gameState.currentQuizIndex < 3) {
+                gameState.currentQuizIndex++;
+                renderDuelQuizStep();
+            } else {
+                finishTurn(); 
+            }
+        }
+
+        // ==========================================
+        //  SHARED GAME COMPLETION (ANIMATION)
+        // ==========================================
+        function finishTurn() {
+            // Hide Panels immediately
+            document.getElementById('solo-panel').classList.add('hidden');
+            document.getElementById('duel-panel').classList.add('hidden');
+
+            if (gameState.mode === 'solo' && gameState.turnScore > 0) {
+                const player = gameState.players[gameState.currentPlayerIndex];
+                player.score += gameState.turnScore;
+                
+                const scoreCard = document.getElementById(`score-card-${player.id}`);
+                const floating = document.createElement('div');
+                floating.className = 'floating-score text-green-500';
+                floating.innerText = `+${gameState.turnScore}`;
+                const rect = scoreCard.getBoundingClientRect();
+                floating.style.left = `${rect.left + rect.width/2}px`;
+                floating.style.top = `${rect.top}px`;
+                document.body.appendChild(floating);
+                setTimeout(() => floating.remove(), 1000);
+            }
+
+            // Animate Bird Flying Away
+            if(gameState.selectedCardId !== null) {
+                const birdId = gameState.selectedCardId;
+                const birdEl = document.getElementById(`bird-${birdId}`);
+                if(birdEl) {
+                    birdEl.classList.add('fly-away');
+                }
+
+                // Wait for animation to finish before removing from logical state
+                setTimeout(() => {
+                    const card = gameState.activeCards.find(c => c.id === birdId);
+                    if(card) card.isMatched = true;
+                    
+                    gameState.selectedCardId = null;
+                    gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+                    
+                    renderScoreboard();
+                    renderBoard();
+
+                    if(gameState.activeCards.every(c => c.isMatched)) {
+                        setTimeout(showGameOver, 500);
+                    }
+                }, 800);
+            } else {
+                gameState.currentPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
+                renderScoreboard();
+                renderBoard();
+            }
+        }
+
+        // --- TIMER ---
+        function startTimer() {
+            clearInterval(gameState.timerInterval);
+            gameState.timeLeft = 600;
+            updateTimerUI();
+            
+            const timerEl = document.getElementById('timer-display');
+            timerEl.classList.remove('bg-red-800', 'animate-pulse');
+
+            gameState.timerInterval = setInterval(() => {
+                gameState.timeLeft--;
+                updateTimerUI();
+                if(gameState.timeLeft <= 10) timerEl.classList.add('bg-red-800', 'animate-pulse');
+                if(gameState.timeLeft <= 0) {
+                    stopTimer(); 
+                    showModal("⏱ MATAHARI TERBENAM!", "Waktu bermain telah habis.", "alert", () => {
+                        showGameOver();
+                    });
+                }
+            }, 1000);
+        }
+
+        function stopTimer() {
+            clearInterval(gameState.timerInterval);
+            document.getElementById('timer-display').classList.remove('bg-red-800', 'animate-pulse');
+        }
+
+        function updateTimerUI() {
+            if(gameState.timeLeft >= 0) {
+                let minutes = Math.floor(gameState.timeLeft / 60);
+                let seconds = gameState.timeLeft % 60;
+                document.getElementById('timer-display').innerHTML = `⏱ <span id="time-left">${minutes}:${seconds < 10 ? '0' : ''}${seconds}</span>`;
+            }
+        }
+
+        // --- SISTEM MODAL KUSTOM ---
+        function showModal(title, message, type, onConfirm) {
+            const modal = document.getElementById('custom-modal');
+            document.getElementById('modal-title').innerHTML = title;
+            document.getElementById('modal-message').innerHTML = message;
+            
+            const actions = document.getElementById('modal-actions');
+            actions.innerHTML = '';
+            
+            if (type === 'confirm') {
+                const btnCancel = document.createElement('button');
+                btnCancel.className = 'flex-1 bg-amber-200 hover:bg-amber-300 text-amber-900 font-black py-3 rounded-xl border-b-4 border-amber-500 transition';
+                btnCancel.innerText = 'Batal';
+                btnCancel.onclick = () => { modal.classList.add('hidden'); };
+                
+                const btnOk = document.createElement('button');
+                btnOk.className = 'flex-1 bg-red-500 hover:bg-red-600 text-white font-black py-3 rounded-xl border-b-4 border-red-700 transition shadow-md';
+                btnOk.innerText = 'Ya, Keluar';
+                btnOk.onclick = () => {
+                    modal.classList.add('hidden');
+                    if (onConfirm) onConfirm();
+                };
+                
+                actions.appendChild(btnCancel);
+                actions.appendChild(btnOk);
+            } else {
+                const btnOk = document.createElement('button');
+                btnOk.className = 'w-full bg-green-500 hover:bg-green-600 text-white font-black py-3 rounded-xl border-b-4 border-green-700 text-xl transition shadow-md';
+                btnOk.innerText = 'Tutup / Lanjut';
+                btnOk.onclick = () => {
+                    modal.classList.add('hidden');
+                    if (onConfirm) onConfirm();
+                };
+                actions.appendChild(btnOk);
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        function resetGame() {
+            showModal("Keluar Sawah?", "Yakin ingin berhenti mengusir hama dan kembali ke menu utama?", "confirm", () => {
+                stopTimer();
+                stopSpeaking();
+                document.getElementById('game-screen').classList.add('hidden');
+                document.getElementById('duel-panel').classList.add('hidden');
+                document.getElementById('solo-panel').classList.add('hidden');
+                document.getElementById('setup-screen').classList.remove('hidden');
+            });
+        }
+
+        function showGameOver() {
+            let winner = gameState.players[0];
+            let isTie = false;
+            
+            if (gameState.players.length > 1) {
+                if(gameState.players[1].score > winner.score) {
+                    winner = gameState.players[1];
+                } else if (gameState.players[1].score === winner.score) {
+                    isTie = true;
+                }
+            }
+
+            let msg = isTie ? "Panen Terbagi Rata! Permainan Seri!" : `Selamat!<br><span class="text-3xl font-black text-green-600 mt-2 mb-1 block">${winner.name}</span>adalah Petani Terbaik dengan ${winner.score} Poin!`;
+            
+            showModal("🎉 PANEN SELESAI!", msg, "alert", () => {
+                stopTimer();
+                stopSpeaking();
+                document.getElementById('game-screen').classList.add('hidden');
+                document.getElementById('duel-panel').classList.add('hidden');
+                document.getElementById('solo-panel').classList.add('hidden');
+                document.getElementById('setup-screen').classList.remove('hidden');
+            });
+        }
+
+    </script>
+</body>
+</html>
